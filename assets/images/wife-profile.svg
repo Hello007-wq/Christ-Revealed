@@ -1,0 +1,10 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .circle { fill: #D4AF37; }
+      .text { fill: white; font-size: 80px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; font-family: Arial, sans-serif; }
+    </style>
+  </defs>
+  <circle class="circle" cx="100" cy="100" r="100"/>
+  <text class="text" x="100" y="100">W</text>
+</svg>
