@@ -1,0 +1,32 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" width="412" height="915" viewBox="0 0 412 915">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f7faff" />
+      <stop offset="100%" stop-color="#eaf1ff" />
+    </linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#186BFF" />
+      <stop offset="100%" stop-color="#124FD1" />
+    </linearGradient>
+  </defs>
+  <rect width="412" height="915" fill="url(#bg)" />
+  <rect x="0.5" y="0.5" width="411" height="914" rx="0" fill="none" stroke="#c9d8f5" />
+  <rect x="16" y="16" width="380" height="158" rx="28" fill="url(#hero)" />
+  <text x="40" y="64" fill="#fff" font-family="Arial, sans-serif" font-size="28" font-weight="700">Home</text>
+  <text x="40" y="96" fill="#fff" font-family="Arial, sans-serif" font-size="14">Live services, recent sermons, and community</text>
+  <text x="40" y="116" fill="#fff" font-family="Arial, sans-serif" font-size="14">updates sit above a crowded seven-item bar.</text>
+  <rect x="16" y="190" width="380" height="120" rx="24" fill="#fff" stroke="#D9E6FF" />
+  <text x="36" y="228" fill="#222" font-family="Arial, sans-serif" font-size="20" font-weight="700">Why this is a problem</text>
+  <text x="36" y="256" fill="#6F7A8A" font-family="Arial, sans-serif" font-size="13">Seven destinations squeeze labels and reduce</text>
+  <text x="36" y="276" fill="#6F7A8A" font-family="Arial, sans-serif" font-size="13">comfort on Android screens.</text>
+  <rect x="0" y="827" width="412" height="88" fill="#fff" stroke="#D9E6FF" />
+  <g font-family="Arial, sans-serif" font-size="10" font-weight="700" fill="#6F7A8A" text-anchor="middle">
+    <g transform="translate(29 853)"><circle cx="0" cy="0" r="11" fill="#dbe8ff"/><circle cx="0" cy="0" r="5" fill="#186BFF"/><text y="29" fill="#186BFF">Home</text></g>
+    <g transform="translate(88 853)"><circle cx="0" cy="0" r="11" fill="#dbe8ff"/><circle cx="0" cy="0" r="5" fill="#186BFF"/><text y="29">Playlists</text></g>
+    <g transform="translate(147 853)"><circle cx="0" cy="0" r="11" fill="#dbe8ff"/><circle cx="0" cy="0" r="5" fill="#186BFF"/><text y="29">Downloads</text></g>
+    <g transform="translate(206 853)"><circle cx="0" cy="0" r="11" fill="#fde8c7"/><circle cx="0" cy="0" r="5" fill="#FF8A02"/><text y="29">Store</text></g>
+    <g transform="translate(265 853)"><circle cx="0" cy="0" r="11" fill="#def2e7"/><circle cx="0" cy="0" r="5" fill="#27a061"/><text y="29">Community</text></g>
+    <g transform="translate(324 853)"><circle cx="0" cy="0" r="11" fill="#dbe8ff"/><circle cx="0" cy="0" r="5" fill="#186BFF"/><text y="29">News</text></g>
+    <g transform="translate(383 853)"><circle cx="0" cy="0" r="11" fill="#dbe8ff"/><circle cx="0" cy="0" r="5" fill="#186BFF"/><text y="29">Pastors</text></g>
+  </g>
+</svg>

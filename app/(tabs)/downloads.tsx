@@ -1,199 +1,114 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { COLORS, SPACING, FONTS } from '@/constants/theme';
-import { MOCK_SERMONS } from '@/data/mockData';
-import { Sermon } from '@/types';
-import Card from '@/components/Card';
-import { Download, RefreshCw, Trash2, CheckCircle } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { Download, BookOpen, PlayCircle } from 'lucide-react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { COLORS, FONTS, SPACING } from '@/constants/theme';
+import { useAppTheme } from '@/lib/theme';
 
 export default function DownloadsScreen() {
-  const [downloads, setDownloads] = useState<Sermon[]>(MOCK_SERMONS.slice(0, 3));
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'synced'>('idle');
-
-  const handleSync = () => {
-    setSyncStatus('syncing');
-    setTimeout(() => {
-      setSyncStatus('synced');
-      setTimeout(() => setSyncStatus('idle'), 2000);
-    }, 2000);
-  };
-
-  const removeDownload = (id: string) => {
-    setDownloads(downloads.filter((d) => d.id !== id));
-  };
-
-  const getTotalSize = () => {
-    return downloads.reduce((acc, sermon) => acc + sermon.duration * 2, 0);
-  };
+  const router = useRouter();
+  const { colors } = useAppTheme();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Downloaded Content</Text>
-          <Text style={styles.statsValue}>{downloads.length} sermons</Text>
-          <Text style={styles.statsSubtext}>~{getTotalSize()} MB</Text>
-        </View>
-
-        <TouchableOpacity
-          style={[
-            styles.syncButton,
-            syncStatus === 'syncing' && styles.syncButtonActive,
-            syncStatus === 'synced' && styles.syncButtonSuccess,
-          ]}
-          onPress={handleSync}
-          disabled={syncStatus !== 'idle'}
-        >
-          {syncStatus === 'synced' ? (
-            <CheckCircle size={20} color={COLORS.white} />
-          ) : (
-            <RefreshCw size={20} color={COLORS.white} />
-          )}
-          <Text style={styles.syncButtonText}>
-            {syncStatus === 'idle' && 'Sync Now'}
-            {syncStatus === 'syncing' && 'Syncing...'}
-            {syncStatus === 'synced' && 'Synced!'}
-          </Text>
-        </TouchableOpacity>
+    <ScrollView style={[styles.container, { backgroundColor: colors.mutedBackground }]} contentContainerStyle={styles.content}>
+      <View style={[styles.hero, { backgroundColor: colors.header }]}>
+        <Download size={26} color={colors.headerText} />
+        <Text style={[styles.heroTitle, { color: colors.headerText }]}>Offline Library</Text>
+        <Text style={[styles.heroText, { color: colors.headerText }]}>
+          Saved sermons and playlists will appear here so people can revisit ministry content without reloading the feed.
+        </Text>
       </View>
 
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.sectionTitle}>Offline Available</Text>
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <Text style={[styles.cardTitle, { color: colors.text }]}>No saved content yet</Text>
+        <Text style={[styles.cardBody, { color: colors.mutedText }]}>
+          You can continue browsing sermons and playlists from the main app. When an item is saved for offline access, it will surface here automatically.
+        </Text>
 
-        {downloads.length === 0 ? (
-          <Card>
-            <View style={styles.emptyState}>
-              <Download size={48} color={COLORS.gray} />
-              <Text style={styles.emptyTitle}>No Downloads Yet</Text>
-              <Text style={styles.emptyText}>
-                Download sermons to listen offline anytime
-              </Text>
-            </View>
-          </Card>
-        ) : (
-          downloads.map((sermon) => (
-            <Card key={sermon.id} style={styles.downloadCard}>
-              <View style={styles.downloadHeader}>
-                <View style={styles.downloadInfo}>
-                  <Text style={styles.downloadTitle} numberOfLines={2}>
-                    {sermon.title}
-                  </Text>
-                  <Text style={styles.downloadSpeaker}>{sermon.speaker}</Text>
-                  <Text style={styles.downloadMeta}>
-                    {sermon.duration} min • {sermon.mediaType} • ~{sermon.duration * 2} MB
-                  </Text>
-                </View>
-                <TouchableOpacity onPress={() => removeDownload(sermon.id)}>
-                  <Trash2 size={20} color={COLORS.error} />
-                </TouchableOpacity>
-              </View>
-            </Card>
-          ))
-        )}
-      </ScrollView>
-    </View>
+        <View style={styles.actions}>
+          <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.primary }]} onPress={() => router.push('/(tabs)')}>
+            <PlayCircle size={18} color={COLORS.white} />
+            <Text style={styles.actionText}>Browse sermons</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, styles.secondaryAction, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+            onPress={() => router.push('/(tabs)/playlists')}
+          >
+            <BookOpen size={18} color={colors.primary} />
+            <Text style={[styles.actionText, { color: colors.primary }]}>Open playlists</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.lightGray,
   },
-  header: {
+  content: {
     padding: SPACING.md,
+    paddingBottom: SPACING.xl,
     gap: SPACING.md,
   },
-  statsCard: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
+  hero: {
+    borderRadius: 22,
     padding: SPACING.lg,
+    gap: SPACING.xs,
   },
-  statsTitle: {
+  heroTitle: {
+    color: COLORS.white,
+    fontSize: 24,
+    lineHeight: 28,
+    fontWeight: '900',
+  },
+  heroText: {
+    color: 'rgba(255,255,255,0.88)',
     fontSize: FONTS.sizes.medium,
-    color: COLORS.white,
-    marginBottom: SPACING.xs,
+    lineHeight: 20,
   },
-  statsValue: {
-    fontSize: FONTS.sizes.title,
-    fontWeight: '700',
-    color: COLORS.accent,
-    marginBottom: 4,
-  },
-  statsSubtext: {
-    fontSize: FONTS.sizes.small,
-    color: COLORS.white,
-  },
-  syncButton: {
-    backgroundColor: COLORS.accent,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: SPACING.md,
-    borderRadius: 8,
-    gap: SPACING.sm,
-  },
-  syncButtonActive: {
-    backgroundColor: COLORS.gray,
-  },
-  syncButtonSuccess: {
-    backgroundColor: COLORS.success,
-  },
-  syncButtonText: {
-    color: COLORS.white,
-    fontSize: FONTS.sizes.large,
-    fontWeight: '700',
-  },
-  scrollView: {
-    flex: 1,
-    padding: SPACING.md,
-  },
-  sectionTitle: {
-    fontSize: FONTS.sizes.xlarge,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: SPACING.md,
-  },
-  emptyState: {
-    alignItems: 'center',
+  card: {
+    borderRadius: 24,
+    borderWidth: 1,
     padding: SPACING.xl,
+    gap: SPACING.sm,
+    shadowColor: '#0B2D64',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 4,
   },
-  emptyTitle: {
-    fontSize: FONTS.sizes.xlarge,
-    fontWeight: '700',
+  cardTitle: {
     color: COLORS.text,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.sm,
+    fontSize: 22,
+    fontWeight: '800',
   },
-  emptyText: {
-    fontSize: FONTS.sizes.medium,
+  cardBody: {
     color: COLORS.gray,
-    textAlign: 'center',
+    fontSize: FONTS.sizes.medium,
+    lineHeight: 22,
   },
-  downloadCard: {
-    marginBottom: SPACING.sm,
-  },
-  downloadHeader: {
+  actions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
   },
-  downloadInfo: {
-    flex: 1,
-    marginRight: SPACING.md,
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    borderRadius: 999,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    minHeight: 48,
   },
-  downloadTitle: {
-    fontSize: FONTS.sizes.large,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: SPACING.xs,
+  secondaryAction: {
+    borderWidth: 1,
   },
-  downloadSpeaker: {
-    fontSize: FONTS.sizes.medium,
-    color: COLORS.primary,
-    marginBottom: SPACING.xs,
-  },
-  downloadMeta: {
-    fontSize: FONTS.sizes.small,
-    color: COLORS.gray,
+  actionText: {
+    color: COLORS.white,
+    fontWeight: '800',
   },
 });

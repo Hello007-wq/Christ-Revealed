@@ -1,37 +1,107 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { COLORS, SPACING, FONTS } from '@/constants/theme';
-import { MOCK_COMMUNITY_POSTS, MOCK_PRAYER_REQUESTS } from '@/data/mockData';
 import Card from '@/components/Card';
 import { CheckCircle, XCircle, Archive } from 'lucide-react-native';
+import { logAdminAction } from '@/lib/admin-audit';
+import supabase from '@/lib/supabase';
+import { CommunityPost, PrayerRequest } from '@/types';
 
 export default function ModerateScreen() {
   const [activeTab, setActiveTab] = useState<'posts' | 'prayer'>('posts');
-  const [posts, setPosts] = useState(MOCK_COMMUNITY_POSTS);
-  const [prayerRequests, setPrayerRequests] = useState(MOCK_PRAYER_REQUESTS);
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [prayerRequests, setPrayerRequests] = useState<PrayerRequest[]>([]);
 
-  const approvePost = (id: string) => {
-    setPosts(posts.filter((p) => p.id !== id));
+  useEffect(() => {
+    const load = async () => {
+      try {
+        await supabase.rpc('cleanup_expired_social_content');
+      } catch {
+        // Continue loading moderation queue even if cleanup RPC is unavailable.
+      }
+      const minDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: postData } = await supabase
+        .from('community_posts')
+        .select('id, user_id, author, content, timestamp, type, replies, status')
+        .gte('timestamp', minDate)
+        .order('timestamp', { ascending: false })
+        .limit(100);
+      if (postData) setPosts(postData as any);
+
+      const { data: prayerData } = await supabase
+        .from('prayer_requests')
+        .select('id, user_id, author, request, timestamp, prayers, status')
+        .gte('timestamp', minDate)
+        .order('timestamp', { ascending: false })
+        .limit(100);
+      if (prayerData) setPrayerRequests(prayerData as any);
+    };
+    load();
+  }, []);
+
+  const approvePost = async (id: string) => {
+    const previousPosts = posts;
+    try {
+      setPosts((prev) => prev.map((p) => (p.id === id ? { ...p, status: 'approved' } : p)));
+      const { error } = await supabase.from('community_posts').update({ status: 'approved' }).eq('id', id);
+      if (error) throw error;
+      await logAdminAction('community_post_approve', 'community_post', id).catch(() => undefined);
+    } catch (e: any) {
+      setPosts(previousPosts);
+      Alert.alert('Moderation', e.message ?? 'Failed to approve post');
+    }
   };
 
-  const rejectPost = (id: string) => {
-    setPosts(posts.filter((p) => p.id !== id));
+  const rejectPost = async (id: string) => {
+    const previousPosts = posts;
+    try {
+      setPosts((prev) => prev.map((p) => (p.id === id ? { ...p, status: 'rejected' } : p)));
+      const { error } = await supabase.from('community_posts').update({ status: 'rejected' }).eq('id', id);
+      if (error) throw error;
+      await logAdminAction('community_post_reject', 'community_post', id).catch(() => undefined);
+    } catch (e: any) {
+      setPosts(previousPosts);
+      Alert.alert('Moderation', e.message ?? 'Failed to reject post');
+    }
   };
 
-  const approvePrayer = (id: string) => {
-    setPrayerRequests(
-      prayerRequests.map((p) => (p.id === id ? { ...p, status: 'approved' as const } : p))
-    );
+  const approvePrayer = async (id: string) => {
+    const previousRequests = prayerRequests;
+    try {
+      setPrayerRequests((prev) => prev.map((p) => (p.id === id ? { ...p, status: 'approved' } as any : p)));
+      const { error } = await supabase.from('prayer_requests').update({ status: 'approved' }).eq('id', id);
+      if (error) throw error;
+      await logAdminAction('prayer_request_approve', 'prayer_request', id).catch(() => undefined);
+    } catch (e: any) {
+      setPrayerRequests(previousRequests);
+      Alert.alert('Moderation', e.message ?? 'Failed to approve request');
+    }
   };
 
-  const rejectPrayer = (id: string) => {
-    setPrayerRequests(prayerRequests.filter((p) => p.id !== id));
+  const rejectPrayer = async (id: string) => {
+    const previousRequests = prayerRequests;
+    try {
+      setPrayerRequests((prev) => prev.filter((p) => p.id !== id));
+      const { error } = await supabase.from('prayer_requests').delete().eq('id', id);
+      if (error) throw error;
+      await logAdminAction('prayer_request_reject', 'prayer_request', id).catch(() => undefined);
+    } catch (e: any) {
+      setPrayerRequests(previousRequests);
+      Alert.alert('Moderation', e.message ?? 'Failed to reject request');
+    }
   };
 
-  const archivePrayer = (id: string) => {
-    setPrayerRequests(
-      prayerRequests.map((p) => (p.id === id ? { ...p, status: 'archived' as const } : p))
-    );
+  const archivePrayer = async (id: string) => {
+    const previousRequests = prayerRequests;
+    try {
+      setPrayerRequests((prev) => prev.map((p) => (p.id === id ? { ...p, status: 'archived' } as any : p)));
+      const { error } = await supabase.from('prayer_requests').update({ status: 'archived' }).eq('id', id);
+      if (error) throw error;
+      await logAdminAction('prayer_request_archive', 'prayer_request', id).catch(() => undefined);
+    } catch (e: any) {
+      setPrayerRequests(previousRequests);
+      Alert.alert('Moderation', e.message ?? 'Failed to archive request');
+    }
   };
 
   return (
@@ -42,7 +112,7 @@ export default function ModerateScreen() {
           onPress={() => setActiveTab('posts')}
         >
           <Text style={[styles.tabText, activeTab === 'posts' && styles.activeTabText]}>
-            Community Posts ({posts.length})
+            Community Posts ({posts.filter((p) => (p.status ?? 'pending') === 'pending').length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -58,12 +128,14 @@ export default function ModerateScreen() {
       <ScrollView style={styles.scrollView}>
         {activeTab === 'posts' ? (
           <>
-            {posts.length === 0 ? (
+            {posts.filter((post) => (post.status ?? 'pending') === 'pending').length === 0 ? (
               <Card>
                 <Text style={styles.emptyText}>No posts to moderate</Text>
               </Card>
             ) : (
-              posts.map((post) => (
+              posts
+                .filter((post) => (post.status ?? 'pending') === 'pending')
+                .map((post) => (
                 <Card key={post.id} style={styles.postCard}>
                   <View style={styles.postHeader}>
                     <View>

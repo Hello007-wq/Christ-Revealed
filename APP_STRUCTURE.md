@@ -8,9 +8,10 @@ A comprehensive React Native mobile app built with Expo for church ministry mana
 - **Home Screen**: View live services, set reminders, browse recent sermons
 - **Sermon Detail**: Play/download sermons, bookmark favorites, share with others
 - **Playlists**: Create and manage custom sermon playlists
-- **Downloads**: Access downloaded content offline with auto-sync functionality
+- **Downloads**: Offline library shell with a clean empty state and direct links back to sermons and playlists
 - **Store**: Browse and purchase ministry merchandise
 - **Community Hub**: Participate in discussions, submit prayer requests, share testimonies
+- **More Hub**: Access secondary pages such as news, pastors, and photos
 
 ### Admin Dashboard
 - **Dashboard Home**: Overview of user analytics and engagement metrics
@@ -40,21 +41,27 @@ A comprehensive React Native mobile app built with Expo for church ministry mana
 ### User Flow (Bottom Tabs)
 ```
 /(tabs)
-  ├── index (Home)
-  ├── playlists
-  ├── downloads
-  ├── merch
-  └── community
+  - index (Home)
+  - playlists
+  - merch (Store)
+  - community
+  - more
+    - news
+    - pastors
+    - photos
 ```
+
+Primary navigation is capped at five destinations to keep labels visible, preserve 48dp+ touch targets, and better match Android Material guidance. Secondary routes remain fully supported through the More hub and direct routing.
+Unavailable destinations are kept out of visible navigation instead of being left as dead-end "coming soon" tiles.
 
 ### Admin Flow (Stack Navigation)
 ```
 /(admin)
-  ├── index (Dashboard)
-  ├── upload
-  ├── analytics
-  ├── notifications
-  └── moderate
+  - index (Dashboard)
+  - upload
+  - analytics
+  - notifications
+  - moderate
 ```
 
 ### Auth Flow
@@ -70,9 +77,9 @@ A comprehensive React Native mobile app built with Expo for church ministry mana
 2. **Home** - Live services and recent sermons feed
 3. **Sermon Detail** - Full sermon view with play/download/bookmark
 4. **Playlists** - Custom playlist management
-5. **Downloads** - Offline content with sync status
-6. **Store** - Ministry merchandise catalog
-7. **Community** - Forums, prayer requests, and testimonies
+5. **Store** - Ministry merchandise catalog
+6. **Community** - Forums, prayer requests, and testimonies
+7. **More Hub** - Secondary pages for news, pastors, and photos
 
 ### Admin Screens
 1. **Admin Dashboard** - Overview with key metrics
@@ -87,6 +94,8 @@ A comprehensive React Native mobile app built with Expo for church ministry mana
 - `Card` - Container with shadow and padding
 - `SermonCard` - Sermon display with metadata
 - `MerchCard` - Merchandise item display
+- `ProfileAvatar` - Branded initials/avatar fallback for missing people photos
+- `MediaFallback` - Clean media placeholder for sermons, merch, and thumbnails
 - `CustomModal` - Full-screen modal dialog
 - `SimpleChart` - Basic bar chart for analytics
 
@@ -134,7 +143,7 @@ npm run typecheck
 
 ## Notes
 
-- All images use placeholder URLs from Pexels
+- User-facing image gaps use branded fallback components instead of placeholder URLs
 - Mock data used throughout for demonstration
 - No backend integration (ready for Supabase or API integration)
 - Designed mobile-first with clean, reverent aesthetic

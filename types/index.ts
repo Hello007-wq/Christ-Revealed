@@ -47,15 +47,18 @@ export interface AnalyticsData {
 
 export interface CommunityPost {
   id: string;
+  user_id?: string;
   author: string;
   content: string;
   timestamp: string;
   type: 'discussion' | 'prayer' | 'testimony';
+  status?: 'pending' | 'approved' | 'rejected';
   replies: number;
 }
 
 export interface PrayerRequest {
   id: string;
+  user_id?: string;
   author: string;
   request: string;
   timestamp: string;

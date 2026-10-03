@@ -1,5 +1,6 @@
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { COLORS, SPACING } from '@/constants/theme';
+import { SPACING } from '@/constants/theme';
+import { useAppTheme } from '@/lib/theme';
 
 interface CardProps {
   children: React.ReactNode;
@@ -7,12 +8,13 @@ interface CardProps {
 }
 
 export default function Card({ children, style }: CardProps) {
-  return <View style={[styles.card, style]}>{children}</View>;
+  const { colors } = useAppTheme();
+
+  return <View style={[styles.card, { backgroundColor: colors.surface }, style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: SPACING.md,
     shadowColor: '#000',

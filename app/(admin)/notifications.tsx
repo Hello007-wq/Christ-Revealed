@@ -1,8 +1,11 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { useEffect, useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { COLORS, SPACING, FONTS } from '@/constants/theme';
 import Card from '@/components/Card';
 import { Bell, Send, Calendar } from 'lucide-react-native';
+import { logAdminAction } from '@/lib/admin-audit';
+import { sendPushNotificationToAll } from '@/lib/push-service';
+import supabase, { getSafeUser } from '@/lib/supabase';
 
 interface NotificationTemplate {
   id: string;
@@ -15,6 +18,7 @@ export default function NotificationsScreen() {
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
+  const [recent, setRecent] = useState<{ id: string; title: string; body: string; scheduled_at: string | null; sent: boolean; created_at: string }[]>([]);
 
   const templates: NotificationTemplate[] = [
     { id: '1', title: 'Live Service Starting', type: 'live' },
@@ -23,11 +27,52 @@ export default function NotificationsScreen() {
     { id: '4', title: 'Custom Message', type: 'custom' },
   ];
 
-  const handleSendNotification = () => {
-    console.log('Sending notification...', { title, message, scheduleTime });
-    setTitle('');
-    setMessage('');
-    setScheduleTime('');
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from('notifications')
+        .select('id, title, body, scheduled_at, sent, created_at')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (data) setRecent(data as any);
+    };
+    load();
+  }, []);
+
+  const handleSendNotification = async () => {
+    if (!title.trim() || !message.trim()) {
+      Alert.alert('Notifications', 'Please enter title and message');
+      return;
+    }
+    const scheduled_at = null;
+    try {
+      const user = await getSafeUser();
+      const { error } = await supabase.from('notifications').insert({
+        title,
+        body: message,
+        scheduled_at,
+        sent: true,
+        created_by: user?.id ?? null,
+      });
+      if (error) throw error;
+      await sendPushNotificationToAll(title, message, { kind: 'notification' }).catch(() => undefined);
+      setTitle('');
+      setMessage('');
+      setScheduleTime('');
+      const { data } = await supabase
+        .from('notifications')
+        .select('id, title, body, scheduled_at, sent, created_at')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (data) setRecent(data as any);
+      await logAdminAction('notification_send', 'notification', null, {
+        title,
+        type: selectedType,
+      }).catch(() => undefined);
+      Alert.alert('Notifications', 'Sent');
+    } catch (e: any) {
+      Alert.alert('Notifications', e.message ?? 'Unexpected error');
+    }
   };
 
   return (
@@ -111,25 +156,19 @@ export default function NotificationsScreen() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Notifications</Text>
-        <Card style={styles.historyCard}>
-          <View style={styles.historyItem}>
-            <Bell size={20} color={COLORS.primary} />
-            <View style={styles.historyContent}>
-              <Text style={styles.historyTitle}>Sunday Service Live Now!</Text>
-              <Text style={styles.historyMeta}>Sent 2 hours ago • 1,234 recipients</Text>
+        {recent.map((n) => (
+          <Card key={n.id} style={styles.historyCard}>
+            <View style={styles.historyItem}>
+              <Bell size={20} color={n.sent ? COLORS.primary : COLORS.accent} />
+              <View style={styles.historyContent}>
+                <Text style={styles.historyTitle}>{n.title}</Text>
+                <Text style={styles.historyMeta}>
+                  {n.sent ? 'Sent' : 'Scheduled'} - {new Date(n.created_at).toLocaleString()}
+                </Text>
+              </View>
             </View>
-          </View>
-        </Card>
-
-        <Card style={styles.historyCard}>
-          <View style={styles.historyItem}>
-            <Bell size={20} color={COLORS.accent} />
-            <View style={styles.historyContent}>
-              <Text style={styles.historyTitle}>New Sermon: The Power of Faith</Text>
-              <Text style={styles.historyMeta}>Sent 1 day ago • 2,345 recipients</Text>
-            </View>
-          </View>
-        </Card>
+          </Card>
+        ))}
       </View>
     </ScrollView>
   );
@@ -254,3 +293,4 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
   },
 });
+

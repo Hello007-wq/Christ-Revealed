@@ -1,47 +1,152 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  Platform,
+} from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { COLORS, SPACING, FONTS } from '@/constants/theme';
-import { Upload, Calendar, Tag } from 'lucide-react-native';
+import { Upload, Calendar, Tag, Link } from 'lucide-react-native';
+import { useFocusEffect } from 'expo-router';
+import { logAdminAction } from '@/lib/admin-audit';
+import { sendPushNotificationToAll } from '@/lib/push-service';
+import { deleteSermonById, getAllSermons, uploadSermon, youtubeThumbnail } from '@/lib/sermon-service';
+import supabase from '@/lib/supabase';
+import { Sermon } from '@/types';
 
 export default function UploadSermonScreen() {
   const [title, setTitle] = useState('');
   const [speaker, setSpeaker] = useState('');
   const [duration, setDuration] = useState('');
   const [mediaType, setMediaType] = useState<'audio' | 'video'>('video');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [mp3Url, setMp3Url] = useState('');
   const [tags, setTags] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
-  const [file, setFile] = useState<string | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dateObj, setDateObj] = useState<Date | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [progressText, setProgressText] = useState<string | null>(null);
+  const [existingSermons, setExistingSermons] = useState<Sermon[]>([]);
 
-  const handleUpload = () => {
-    console.log('Uploading sermon...');
+  const loadExisting = React.useCallback(async () => {
+    try {
+      const data = await getAllSermons();
+      setExistingSermons((data as Sermon[]).slice(0, 25));
+    } catch {
+      setExistingSermons([]);
+    }
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadExisting().catch(() => undefined);
+    }, [loadExisting])
+  );
+
+  const formatDate = (d?: Date | null) =>
+    d
+      ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+          d.getDate()
+        ).padStart(2, '0')}`
+      : 'YYYY-MM-DD';
+
+  const handleUpload = async () => {
+    if (!title.trim() || !speaker.trim() || !duration || !youtubeUrl.trim()) {
+      Alert.alert('Upload Sermon', 'Please fill all required fields including YouTube URL');
+      return;
+    }
+
+    const dur = parseInt(duration, 10);
+    if (Number.isNaN(dur) || dur <= 0) {
+      Alert.alert('Upload Sermon', 'Duration must be a positive number');
+      return;
+    }
+
+    setSubmitting(true);
+    setProgressText('Saving sermon...');
+
+    try {
+      const tagArray = tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      const parsedDate =
+        dateObj ??
+        (scheduledDate && !Number.isNaN(Date.parse(scheduledDate))
+          ? new Date(scheduledDate)
+          : new Date());
+
+      const created = await uploadSermon({
+        title,
+        speaker,
+        duration: dur,
+        mediaType,
+        tags: tagArray,
+        scheduledDate: parsedDate.toISOString().slice(0, 10),
+        youtubeUrl: youtubeUrl.trim(),
+        mp3Url: mp3Url.trim() || undefined,
+      });
+      await logAdminAction('sermon_create', 'sermon', created.id, {
+        title: created.title,
+        speaker: created.speaker,
+        mediaType: created.mediaType,
+      }).catch(() => undefined);
+      await supabase.from('notifications').insert({
+        title: 'New sermon uploaded',
+        body: `${title.trim()} by ${speaker.trim()} is now available to watch.`,
+        sent: true,
+      });
+      await sendPushNotificationToAll(
+        'New sermon uploaded',
+        `${title.trim()} by ${speaker.trim()} is now available to watch.`,
+        { kind: 'sermon' }
+      ).catch(() => undefined);
+
+      setProgressText('Done');
+      Alert.alert('Upload Sermon', 'Sermon saved successfully');
+      setTitle('');
+      setSpeaker('');
+      setDuration('');
+      setYoutubeUrl('');
+      setMp3Url('');
+      setTags('');
+      await loadExisting();
+    } catch (e: any) {
+      Alert.alert('Upload Sermon failed', e.message ?? 'Unexpected error');
+    } finally {
+      setSubmitting(false);
+      setProgressText(null);
+    }
   };
+
+  const thumb = youtubeThumbnail(youtubeUrl);
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.uploadArea}>
-          <Upload size={48} color={COLORS.gray} />
-          <Text style={styles.uploadText}>Tap to select sermon file</Text>
-          <Text style={styles.uploadSubtext}>Audio or Video • Max 500MB</Text>
-          {file && <Text style={styles.fileName}>{file}</Text>}
+          <Link size={48} color={COLORS.gray} />
+          <Text style={styles.uploadText}>Use YouTube URL for Sermon Video</Text>
+          <Text style={styles.uploadSubtext}>
+            Optional MP3 URL allows audio playback in app
+          </Text>
+          {thumb ? <Text style={styles.previewText}>YouTube URL detected</Text> : null}
         </View>
 
         <View style={styles.form}>
           <Text style={styles.label}>Sermon Title *</Text>
-          <TextInput
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Enter sermon title"
-          />
+          <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Enter sermon title" />
 
           <Text style={styles.label}>Speaker *</Text>
-          <TextInput
-            style={styles.input}
-            value={speaker}
-            onChangeText={setSpeaker}
-            placeholder="Enter speaker name"
-          />
+          <TextInput style={styles.input} value={speaker} onChangeText={setSpeaker} placeholder="Enter speaker name" />
 
           <Text style={styles.label}>Duration (minutes) *</Text>
           <TextInput
@@ -52,55 +157,106 @@ export default function UploadSermonScreen() {
             keyboardType="numeric"
           />
 
-          <Text style={styles.label}>Media Type *</Text>
-          <View style={styles.mediaTypeButtons}>
-            <TouchableOpacity
-              style={[styles.typeButton, mediaType === 'audio' && styles.typeButtonActive]}
-              onPress={() => setMediaType('audio')}
-            >
-              <Text
-                style={[styles.typeButtonText, mediaType === 'audio' && styles.typeButtonTextActive]}
-              >
-                Audio
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.typeButton, mediaType === 'video' && styles.typeButtonActive]}
-              onPress={() => setMediaType('video')}
-            >
-              <Text
-                style={[styles.typeButtonText, mediaType === 'video' && styles.typeButtonTextActive]}
-              >
-                Video
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <Text style={styles.label}>Sermon Video URL (YouTube) *</Text>
+          <TextInput
+            style={styles.input}
+            value={youtubeUrl}
+            onChangeText={setYoutubeUrl}
+            placeholder="https://www.youtube.com/watch?v=..."
+            autoCapitalize="none"
+          />
+
+          <Text style={styles.label}>Sermon MP3 URL (Optional)</Text>
+          <TextInput
+            style={styles.input}
+            value={mp3Url}
+            onChangeText={setMp3Url}
+            placeholder="https://..."
+            autoCapitalize="none"
+          />
 
           <Text style={styles.label}>
             <Tag size={16} color={COLORS.text} /> Tags
           </Text>
-          <TextInput
-            style={styles.input}
-            value={tags}
-            onChangeText={setTags}
-            placeholder="faith, hope, love (comma separated)"
-          />
+          <TextInput style={styles.input} value={tags} onChangeText={setTags} placeholder="faith, hope, love" />
 
           <Text style={styles.label}>
             <Calendar size={16} color={COLORS.text} /> Schedule (Optional)
           </Text>
-          <TextInput
-            style={styles.input}
-            value={scheduledDate}
-            onChangeText={setScheduledDate}
-            placeholder="YYYY-MM-DD HH:MM"
-          />
+          <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)} activeOpacity={0.8}>
+            <Text style={{ color: scheduledDate || dateObj ? COLORS.text : COLORS.gray }}>
+              {scheduledDate || formatDate(dateObj)}
+            </Text>
+          </TouchableOpacity>
 
-          <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
-            <Upload size={20} color={COLORS.white} />
-            <Text style={styles.uploadButtonText}>Upload Sermon</Text>
+          {showDatePicker && (
+            <DateTimePicker
+              value={dateObj ?? new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              onChange={(_, selDate) => {
+                if (Platform.OS !== 'ios') setShowDatePicker(false);
+                if (!selDate) return;
+                setDateObj(selDate);
+                setScheduledDate(formatDate(selDate));
+              }}
+            />
+          )}
+
+          <View style={styles.typeRow}>
+            <TouchableOpacity
+              style={[styles.typeButton, mediaType === 'video' && styles.typeActive]}
+              onPress={() => setMediaType('video')}
+            >
+              <Text style={[styles.typeText, mediaType === 'video' && styles.typeTextActive]}>Video</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.typeButton, mediaType === 'audio' && styles.typeActive]}
+              onPress={() => setMediaType('audio')}
+            >
+              <Text style={[styles.typeText, mediaType === 'audio' && styles.typeTextActive]}>Audio</Text>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.uploadButton, submitting && { opacity: 0.7 }]}
+            onPress={handleUpload}
+            disabled={submitting}
+          >
+            {submitting ? <ActivityIndicator color={COLORS.white} /> : <Upload size={20} color={COLORS.white} />}
+            <Text style={styles.uploadButtonText}>{progressText ?? 'Save Sermon'}</Text>
           </TouchableOpacity>
         </View>
+      </View>
+
+      <View style={[styles.form, { marginTop: SPACING.md }]}>
+        <Text style={styles.label}>Manage uploaded sermons</Text>
+        {existingSermons.map((item) => (
+          <View key={item.id} style={styles.manageRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '700', color: COLORS.text }}>{item.title}</Text>
+              <Text style={{ color: COLORS.gray, fontSize: FONTS.sizes.small }}>{item.speaker}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.deleteBtn}
+              onPress={async () => {
+                const previousSermons = existingSermons;
+                try {
+                  setExistingSermons((prev) => prev.filter((s) => s.id !== item.id));
+                  await deleteSermonById(item.id);
+                  await logAdminAction('sermon_delete', 'sermon', item.id, {
+                    title: item.title,
+                  }).catch(() => undefined);
+                } catch (error: any) {
+                  setExistingSermons(previousSermons);
+                  Alert.alert('Delete sermon', error.message ?? 'Failed to delete');
+                }
+              }}
+            >
+              <Text style={{ color: COLORS.white, fontWeight: '700' }}>Delete</Text>
+            </TouchableOpacity>
+          </View>
+        ))}
       </View>
     </ScrollView>
   );
@@ -117,7 +273,8 @@ const styles = StyleSheet.create({
   uploadArea: {
     backgroundColor: COLORS.white,
     borderRadius: 12,
-    padding: SPACING.xl * 2,
+    paddingVertical: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: COLORS.lightGray,
@@ -134,11 +291,13 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.small,
     color: COLORS.gray,
     marginTop: SPACING.xs,
+    textAlign: 'center',
   },
-  fileName: {
-    fontSize: FONTS.sizes.medium,
-    color: COLORS.primary,
-    marginTop: SPACING.md,
+  previewText: {
+    marginTop: SPACING.sm,
+    color: COLORS.success,
+    fontSize: FONTS.sizes.small,
+    fontWeight: '600',
   },
   form: {
     backgroundColor: COLORS.white,
@@ -159,9 +318,10 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     fontSize: FONTS.sizes.medium,
   },
-  mediaTypeButtons: {
+  typeRow: {
     flexDirection: 'row',
-    gap: SPACING.md,
+    gap: SPACING.sm,
+    marginTop: SPACING.lg,
   },
   typeButton: {
     flex: 1,
@@ -171,17 +331,16 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     alignItems: 'center',
   },
-  typeButtonActive: {
-    backgroundColor: COLORS.primary,
+  typeActive: {
     borderColor: COLORS.primary,
+    backgroundColor: '#EAF2FF',
   },
-  typeButtonText: {
-    fontSize: FONTS.sizes.medium,
-    color: COLORS.text,
+  typeText: {
+    color: COLORS.gray,
     fontWeight: '600',
   },
-  typeButtonTextActive: {
-    color: COLORS.white,
+  typeTextActive: {
+    color: COLORS.primary,
   },
   uploadButton: {
     backgroundColor: COLORS.accent,
@@ -191,11 +350,28 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     borderRadius: 8,
     marginTop: SPACING.xl,
-    gap: SPACING.sm,
   },
   uploadButtonText: {
     color: COLORS.white,
     fontSize: FONTS.sizes.large,
     fontWeight: '700',
+    marginLeft: SPACING.sm,
+  },
+  manageRow: {
+    marginTop: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.lightGray,
+    borderRadius: 10,
+    padding: SPACING.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  deleteBtn: {
+    backgroundColor: COLORS.error,
+    borderRadius: 8,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
 });
+

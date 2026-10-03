@@ -1,7 +1,8 @@
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Play } from 'lucide-react-native';
 import { Sermon } from '@/types';
-import { COLORS, SPACING, FONTS } from '@/constants/theme';
-import { Play, Download } from 'lucide-react-native';
+import { COLORS, FONTS, SPACING } from '@/constants/theme';
+import MediaFallback from '@/components/MediaFallback';
 
 interface SermonCardProps {
   sermon: Sermon;
@@ -10,23 +11,26 @@ interface SermonCardProps {
 
 export default function SermonCard({ sermon, onPress }: SermonCardProps) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
-      <Image source={{ uri: sermon.imageUrl }} style={styles.image} />
-      <View style={styles.content}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.92}>
+      <MediaFallback
+        imageUrl={sermon.imageUrl}
+        title="Sermon cover"
+        subtitle="Artwork not available"
+        variant="sermon"
+        style={styles.image}
+      />
+      <View style={styles.playButton}>
+        <Play size={16} color={COLORS.white} fill={COLORS.white} />
+      </View>
+      <View style={styles.body}>
         <Text style={styles.title} numberOfLines={2}>
           {sermon.title}
         </Text>
         <Text style={styles.speaker}>{sermon.speaker}</Text>
-        <View style={styles.meta}>
-          <Text style={styles.metaText}>
-            {sermon.duration} min • {sermon.mediaType}
-          </Text>
-          <View style={styles.stats}>
-            <Play size={14} color={COLORS.gray} />
-            <Text style={styles.statText}>{sermon.views}</Text>
-            <Download size={14} color={COLORS.gray} style={styles.statIcon} />
-            <Text style={styles.statText}>{sermon.downloads}</Text>
-          </View>
+        <View style={styles.metaRow}>
+          <Text style={styles.meta}>{new Date(sermon.date).toLocaleDateString()}</Text>
+          <Text style={styles.meta}>{sermon.duration} min</Text>
+          <Text style={styles.meta}>{sermon.mediaType}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -36,53 +40,53 @@ export default function SermonCard({ sermon, onPress }: SermonCardProps) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    marginVertical: SPACING.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 24,
+    marginBottom: SPACING.md,
     overflow: 'hidden',
+    shadowColor: '#0B2D64',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 4,
   },
   image: {
     width: '100%',
-    height: 180,
+    height: 200,
     backgroundColor: COLORS.lightGray,
   },
-  content: {
-    padding: SPACING.md,
+  playButton: {
+    position: 'absolute',
+    top: SPACING.md,
+    right: SPACING.md,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(24,107,255,0.94)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  body: {
+    padding: SPACING.lg,
   },
   title: {
-    fontSize: FONTS.sizes.large,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '900',
     color: COLORS.text,
-    marginBottom: SPACING.xs,
   },
   speaker: {
-    fontSize: FONTS.sizes.medium,
     color: COLORS.primary,
-    marginBottom: SPACING.sm,
+    fontSize: FONTS.sizes.medium,
+    fontWeight: '700',
+    marginTop: SPACING.xs,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginTop: SPACING.md,
   },
   meta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  metaText: {
-    fontSize: FONTS.sizes.small,
     color: COLORS.gray,
-  },
-  stats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statIcon: {
-    marginLeft: SPACING.sm,
-  },
-  statText: {
     fontSize: FONTS.sizes.small,
-    color: COLORS.gray,
-    marginLeft: 4,
+    fontWeight: '700',
   },
 });

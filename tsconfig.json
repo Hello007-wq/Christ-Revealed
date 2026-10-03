@@ -2,6 +2,16 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "jsx": "react-native",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "allowJs": true,
+    "noEmit": true,
+    "skipLibCheck": true,                // ✅ prevents TypeScript from scanning node_modules
+    "isolatedModules": true,             // ✅ helps with React Native bundling
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "paths": {
       "@/*": ["./*"]
     }
@@ -12,5 +22,11 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts"
+  ],
+  "exclude": [
+    "node_modules",                      // ✅ ignore all dependencies
+    "babel.config.js",
+    "metro.config.js",
+    "jest.config.js"
   ]
 }

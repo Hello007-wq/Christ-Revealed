@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryAddUsageDescription": "Allow Christ Revealed to save church photos to your library.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.hellocooperations.christrevealed"
     },
     "web": {
       "bundler": "metro",
@@ -19,7 +24,10 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-video",
+      "expo-media-library",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true
@@ -36,7 +44,19 @@
       }
     },
     "android": {
-      "package": "com.hello_coopearations.boltexponativewind"
-    }
+      "package": "com.hello_coopearations.boltexponativewind",
+      "permissions": [
+        "READ_MEDIA_IMAGES",
+        "android.permission.POST_NOTIFICATIONS",
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_MEDIA_AUDIO"
+      ]
+    },
+    "owner": "hello_co-opearations"
   }
 }

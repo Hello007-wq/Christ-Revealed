@@ -1,0 +1,40 @@
+<svg width="1280" height="820" viewBox="0 0 1280 820" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="820" rx="32" fill="#F4F7FB"/>
+  <text x="64" y="58" fill="#1F2A37" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700">Updated empty-state screens</text>
+  <text x="64" y="90" fill="#667085" font-family="Inter, Arial, sans-serif" font-size="15">Left: Pastors profile fallback • Right: Downloads empty state</text>
+
+  <!-- Pastors screen -->
+  <rect x="64" y="120" width="540" height="640" rx="36" fill="#FFFFFF" stroke="#D8E4F2"/>
+  <rect x="64" y="120" width="540" height="82" rx="36" fill="#186BFF"/>
+  <text x="96" y="170" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">Church Pastors</text>
+  <rect x="96" y="228" width="476" height="330" rx="28" fill="#FFFFFF" stroke="#D8E4F2"/>
+  <rect x="116" y="250" width="112" height="112" rx="56" fill="#EEF4FF" stroke="#D8E4F2"/>
+  <rect x="132" y="266" width="80" height="80" rx="40" fill="none" stroke="#B8CCFF"/>
+  <text x="168" y="315" text-anchor="middle" fill="#186BFF" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">PE</text>
+  <text x="252" y="278" fill="#1F2A37" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800">Prophet Edward Israel</text>
+  <text x="252" y="310" fill="#186BFF" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700">Visionary Pastor</text>
+  <text x="252" y="346" fill="#667085" font-family="Inter, Arial, sans-serif" font-size="14">Leads the ministry with prayer, revelation, and care.</text>
+  <rect x="252" y="392" width="196" height="44" rx="22" fill="#FF8A02"/>
+  <text x="350" y="420" text-anchor="middle" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800">+263 77 302 6657</text>
+  <rect x="96" y="578" width="476" height="128" rx="24" fill="#F8FBFF" stroke="#D8E4F2"/>
+  <text x="124" y="620" fill="#1F2A37" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800">Profile photo unavailable</text>
+  <text x="124" y="648" fill="#667085" font-family="Inter, Arial, sans-serif" font-size="14">The card now shows initials instead of a placeholder prompt.</text>
+
+  <!-- Downloads screen -->
+  <rect x="676" y="120" width="540" height="640" rx="36" fill="#FFFFFF" stroke="#D8E4F2"/>
+  <rect x="676" y="120" width="540" height="82" rx="36" fill="#186BFF"/>
+  <text x="708" y="170" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800">Offline Library</text>
+  <rect x="708" y="228" width="476" height="260" rx="28" fill="#FFFFFF" stroke="#D8E4F2"/>
+  <circle cx="946" cy="308" r="30" fill="#EEF4FF"/>
+  <path d="M934 308h24" stroke="#186BFF" stroke-width="4" stroke-linecap="round"/>
+  <path d="M946 296v24" stroke="#186BFF" stroke-width="4" stroke-linecap="round"/>
+  <text x="946" y="372" text-anchor="middle" fill="#1F2A37" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800">No saved content yet</text>
+  <text x="946" y="404" text-anchor="middle" fill="#667085" font-family="Inter, Arial, sans-serif" font-size="14">Saved sermons and playlists will appear here.</text>
+  <rect x="748" y="438" width="176" height="44" rx="22" fill="#186BFF"/>
+  <text x="836" y="466" text-anchor="middle" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800">Browse sermons</text>
+  <rect x="936" y="438" width="176" height="44" rx="22" fill="#F8FBFF" stroke="#D8E4F2"/>
+  <text x="1024" y="466" text-anchor="middle" fill="#186BFF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800">Open playlists</text>
+  <rect x="708" y="520" width="476" height="182" rx="24" fill="#F8FBFF" stroke="#D8E4F2"/>
+  <text x="736" y="566" fill="#1F2A37" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800">No coming-soon messaging</text>
+  <text x="736" y="594" fill="#667085" font-family="Inter, Arial, sans-serif" font-size="14">The page now acts as a clean empty state with real navigation.</text>
+</svg>
